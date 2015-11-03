@@ -6,6 +6,8 @@ using System.Windows.Forms;
 using System.IO;
 using System.Xml.Serialization;
 using System.Runtime.Serialization;
+using System.Xml;
+using System.Diagnostics;
 
 namespace TestProgram
 {
@@ -15,20 +17,33 @@ namespace TestProgram
 
         static void Main()
         {
-            XmlSerializer checkpointer = new XmlSerializer(typeof(DataKeeper));
+            PrimeSearcher primes = new PrimeSearcher();
+            Checkpoint<PrimeSearcher> checkpoint = new Checkpoint<PrimeSearcher>();
+            try
+            {
+                primes = checkpoint.Load();
+            }
+            catch (Exception){}
+            for (long i = 0; i < 100; i++)
+            {
+                Stopwatch timer = Stopwatch.StartNew();
+                primes.RunIterations(10);
+                if(timer.ElapsedMilliseconds > 1000)
+                {
+                    checkpoint.Save(primes);
+                    timer.Restart();
+                }               
+            }
+            checkpoint.Save(primes);
+
+
+            primes.PrintResults();
             DataKeeper j = new DataKeeper();
+            Checkpoint<DataKeeper> checkpoint2 = new Checkpoint<DataKeeper>();
 
-            var s = Path.GetFullPath(checkpointFileName);
-
-            using (TextWriter fileWriter = new StreamWriter(checkpointFileName))
-            {
-                checkpointer.Serialize(fileWriter, j);
+            checkpoint2.Save(j);
                 j.a = 123;
-            }
-            using (FileStream fileStream = new FileStream(checkpointFileName, FileMode.Open))
-            {
-                j = (DataKeeper)checkpointer.Deserialize(fileStream);
-            }
+            j = (DataKeeper)checkpoint2.Load();
 
             Console.WriteLine(j.a);
         }
@@ -39,11 +54,20 @@ namespace TestProgram
         public int a = 0;
         private int b = 1;
         protected int c = 2;
-        public Random f = new Random();
+        public Dataer outerObj = new Dataer();
+    }
 
-        public DataKeeper()
+    public class Dataer
+    {
+        public List<String> list = new List<string>();
+        public int[] arr = {2,5,3};
+        public Random obj = new Random();
+
+        public Dataer()
         {
-            d.Next();
+            list.Add("entry1");
+            list.Add("entry2");
         }
+        //public FileStream fileStream = new FileStream("checkpoint2.xml", FileMode.Open);
     }
 }
