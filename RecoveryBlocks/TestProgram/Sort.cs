@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace RecoveryBlocks
 {
@@ -47,11 +48,11 @@ namespace RecoveryBlocks
         {
             string output = "";
             int l = input.Length;
-            char[] check = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
+            char[] check = {' ', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
                             'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z'};
             char[] cin = input.ToCharArray(0, l);
 
-            for (int i = 0; i < 26; i++)
+            for (int i = 0; i < 27; i++)
             {
                 for (int j = 0; j < l; j++)
                 {
@@ -67,14 +68,25 @@ namespace RecoveryBlocks
 
         public static string MadsSort(string input)
         {
-            return input;
-        }
+            char[] chars = input.ToCharArray();
 
-        public static Boolean CorrectString(String result, String expected)
-        {
-            //char[] array = result.ToCharArray();
-            //Array.Sort<char>(array);
-            return result == expected;
+            List<int> values = new List<int>();
+            foreach (char symbol in chars)
+            {
+                values.Add(symbol);
+            }
+
+            int[] valueArr = values.ToArray();
+            Array.Sort(valueArr);
+
+            string output = "";
+            
+                foreach (int val in valueArr)
+            {
+                output += (char)val;
+            }
+
+            return output;
         }
     }
 }

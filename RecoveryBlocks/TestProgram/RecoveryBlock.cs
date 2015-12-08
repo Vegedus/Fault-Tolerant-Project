@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Reflection;
 
 namespace RecoveryBlocks
 {
@@ -9,6 +10,8 @@ namespace RecoveryBlocks
         //TODO: How make generic function?
         private ObservableCollection<Delegate> algorithms = new ObservableCollection<Delegate>();
         public Delegate acceptanceTest;
+        public List<Object> acceptanceParameters = new List<Object>();
+        public bool useResultForTest = false;
 
         public RecoveryBlock(Delegate acceptanceTest)
         {
@@ -24,6 +27,12 @@ namespace RecoveryBlocks
         public void AddAlgorithm(Delegate algorithm)
         {
             algorithms.Add(algorithm);
+        }
+
+        //DataObject is not relevant if we're using only static methods.
+        public Return Run<Return, Parameter>(Parameter parameters)
+        {
+            return Run<Return, Object, Parameter>(parameters);
         }
 
         public Return Run<Return, DataObject, Parameter>(Parameter parameters)
@@ -60,27 +69,26 @@ namespace RecoveryBlocks
                 {
                     //Run the algorithm
                     result = (Return)algorithmLoaded.DynamicInvoke(parameters);
-                    if ((bool)acceptanceTest.DynamicInvoke())
+
+                    List<Object> testParameters = new List<Object>(acceptanceParameters);
+                    if (useResultForTest)
+                        testParameters.Add(result);
+                    if ((bool)acceptanceTest.Method.Invoke(acceptanceTest.Target, testParameters.ToArray()))
                     {
-                        Console.WriteLine("Successfully run algorithm(s) using the recovery block framework. " + i +
+                        Console.WriteLine("\nSuccessfully run algorithm(s) using the recovery block framework. " + i +
                             " algorithms failed, algorithm " + algorithm.Method.Name + " being succesful.");
                         return result;
                     }
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e.Message);
+                    Console.WriteLine("Algorithm failed with message: " + e.Message + ". Next algorithm running.");
                 }
                 parameters = parameterCP.Load();
 
                 i++;
             }
             throw new Exception("None of the existing algorithms completed correctly, consider improving them or providing more.");
-        }
-
-        public void SpeedTest()
-        {
-
         }
     }
 }

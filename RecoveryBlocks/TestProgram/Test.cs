@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Reflection;
+using System.Windows.Forms;
 
 namespace RecoveryBlocks
 {
     class Test
     {
-
-        public delegate string SortDelegate(string s);
+        private delegate string SortDelegate(string s);
 
         public static void TestRecoveryBlockSort()
         {
@@ -26,21 +26,16 @@ namespace RecoveryBlocks
             SortDelegate madsSort = Sort.MadsSort;
             sorters.Add(madsSort);
 
-            MethodInfo sortMethod = typeof(Sort).GetMethod("MarcSort", BindingFlags.Public | BindingFlags.Instance);
+            MethodInfo sortMethod = typeof(Sort).GetMethod("MarcSort");
             Delegate marcSort = Delegate.CreateDelegate(typeof(SortDelegate), sortMethod);
             sorters.Add(marcSort);
 
-            //... and a lambda expression just to get fancy
-            Func<string,string,bool> acceptanceTest = (x, y) => x == y;
-            //    dataList.Method.GetParameters();
-            //acceptanceTest.dataList()
-
-            //Print stuff
+            //Print stuff without recovery blocks
+            Console.WriteLine("Unsorted:");
             foreach (string unsortedString in testStrings)
             {
                 Console.WriteLine(unsortedString);
             }
-
             foreach (Delegate sorter in sorters)
             {
                 Console.WriteLine(sorter.Method.Name + ":");
@@ -49,6 +44,28 @@ namespace RecoveryBlocks
                     Console.WriteLine(sorter.DynamicInvoke(unsortedString));
                 }
             }
+
+            //Recovery block testing
+            RecoveryBlock sortReco = new RecoveryBlock(sorters, null);
+            sortReco.acceptanceTest = (Func<string, string, bool>)String.Equals;
+            sortReco.acceptanceParameters = new List<Object>();
+            sortReco.useResultForTest = true;
+
+            char[] charArr = testStrings[0].ToCharArray();
+            Array.Sort<char>(charArr);
+
+            sortReco.acceptanceParameters.Add(new String(charArr));
+
+            Console.WriteLine(sortReco.Run<string, string>(testStrings[0]));
+
+            sortReco.acceptanceParameters.Clear();
+            sortReco.acceptanceParameters.Add("am are but going Hello I problems. some sort string, there there. this to");
+            Console.WriteLine(sortReco.Run<string, string>(testStrings[1]));
+
+            sortReco.acceptanceParameters.Clear();
+            sortReco.acceptanceParameters.Add("          !#%&()+,-0112234:<>@ETaeeffgiilmmnnoostw«»αστБЬℓ");
+            Console.WriteLine(sortReco.Run<string, string>(testStrings[2]));
+
         }
 
         public const string checkpointFileName = "checkpoint.xml";
@@ -59,6 +76,7 @@ namespace RecoveryBlocks
             PrimeSearcher primeSearch = new PrimeSearcher();
 
             Console.WriteLine("\n\n\nWithout recovery blocks: ");
+            primeSearch.Search(maxSearch);
             primeSearch.PrintResults();
             Console.WriteLine("");
 
@@ -78,7 +96,6 @@ namespace RecoveryBlocks
             reco.AddAlgorithm((Func<long, List<long>>)primeSearch.SearchUnoptimized); //Just a different way to add the algorithm.
 
             List<long> primes2 = reco.Run<List<long>, PrimeSearcher, long>(maxSearch);
-            primeSearch.PrintResults();
             Console.WriteLine("Recovery block run result:\n" + string.Join(",", primes2.ToArray()) + "\n\n");
         }
 
