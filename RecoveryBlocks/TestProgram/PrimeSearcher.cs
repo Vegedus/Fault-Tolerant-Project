@@ -1,39 +1,102 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace TestProgram
+namespace RecoveryBlocks
 {
     public class PrimeSearcher
     {
         public List<long> foundPrimes = new List<long>();
-        public long index = 3;
+        public long primeCandidate = 3;
         public Checkpoint<PrimeSearcher> checkpoint;
 
-        public void RunIterations(long amount)
+        public List<long> Search(long endNumber)
         {
-            amount += index;
-            for(; index < amount; index++)
+            endNumber += primeCandidate;
+            for (; primeCandidate < endNumber; primeCandidate += 2)
             {
-                for (int i = 2; i < index; i++)
+                bool isPrime = true;
+                for (int i = 2; i <= Math.Sqrt(primeCandidate); i++)
                 {
-                    double divided = (double)index / (double)i;
-                    if (divided == Math.Floor(divided)) break;
-                    else if (i == index - 1) foundPrimes.Add(index);
+                    if (primeCandidate % i == 0)
+                    {
+                        isPrime = false;
+                        break;
+                    }
                 }
+                if (isPrime)
+                    foundPrimes.Add(primeCandidate);
             }
+            return foundPrimes;
         }
 
-        public void RunToEnd()
+        public List<long> SearchUnoptimized(long endNumber)
         {
-            RunIterations(long.MaxValue-index);
+            endNumber += primeCandidate;
+            for (; primeCandidate < endNumber; primeCandidate++)
+            {
+                for (int i = 2; i < primeCandidate; i++)
+                {
+                    double divided = (double)primeCandidate / (double)i;
+                    if (i == primeCandidate - 1 && divided == Math.Floor(divided)) foundPrimes.Add(primeCandidate);
+                }
+            }
+            return foundPrimes;
+        }
+
+        public static List<long> SearchStatic(long endNumber)
+        {
+            PrimeSearcher primer = new PrimeSearcher();
+            return primer.Search(endNumber);
+        }
+
+        public static List<long> SearchStatic(PrimeSearcher primer, long endAmount)
+        {
+            return primer.Search(endAmount);
+        }
+
+        public List<long> SearchFail(long endNumber)
+        {
+            endNumber += primeCandidate;
+            for (; primeCandidate < endNumber; primeCandidate++)
+            {
+                for (int i = 2; i < primeCandidate; i++)
+                {
+                    double divided = (double)primeCandidate / (double)i;
+                    if (i == primeCandidate - 1 && divided == Math.Floor(divided)) foundPrimes.Add(primeCandidate);
+                    if(primeCandidate>80)
+                        throw new Exception("Exception, higher prime than I'm comfortable with.");
+                }
+            }
+            return foundPrimes;
         }
 
         public void PrintResults()
         {
             Console.WriteLine(string.Join(",", foundPrimes.ToArray()));
+        }
+
+        public bool CheckPrimes()
+        {
+            if (foundPrimes.Count == 0)
+                return false;
+            foreach (long prime in foundPrimes)
+            {
+                if (prime % 2 == 0 || prime % Math.Sqrt(prime) == 0)
+                    return false;
+                Random randomGenerator = new Random();
+                for (int i = 0; i < 10; i++)
+                {
+                    int ceiling = (int)Math.Sqrt(prime);
+                    if (ceiling < 4)
+                        break;
+                    int divider = randomGenerator.Next(4, ceiling);
+                    if (divider % 2 == 0)
+                        divider--;
+                    if (prime % divider == 0)
+                        return false;
+                }
+            }
+            return true;
         }
     }
 }

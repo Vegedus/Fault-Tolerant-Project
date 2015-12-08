@@ -1,15 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using System.IO;
-using System.Xml.Serialization;
-using System.Runtime.Serialization;
-using System.Xml;
 using System.Diagnostics;
+using Print = System.Diagnostics.Debug;
 
-namespace TestProgram
+namespace RecoveryBlocks
 {
     public static class Start
     {
@@ -17,53 +11,84 @@ namespace TestProgram
 
         static void Main()
         {
+            //testCheckpoint();
+            testRecoveryBlockPrime();
+        }
+
+        public static void testRecoveryBlockPrime()
+        {
+            long maxSearch = 100;
+            PrimeSearcher primeSearch = new PrimeSearcher();
+            Func<PrimeSearcher, long, List<long>> algoFail1 = PrimeSearcher.SearchStatic;
+            Func<long, List<long>> algoFail2 = primeSearch.SearchFail;
+            Func<long, List<long>> algo1 = primeSearch.Search;
+            Func<long, List<long>> algo2 = PrimeSearcher.SearchStatic;
+
+            //List<long> primes = algo1(maxSearch);
+            Func<bool> checkPrimes = primeSearch.CheckPrimes;
+            Console.WriteLine("Without recovery blocks: ");
+            primeSearch.PrintResults();
+
+
+            RecoveryBlock reco = new RecoveryBlock(checkPrimes);
+
+            //reco.AddAlgorithm(algoFail1);
+           // reco.AddAlgorithm(algoFail2);
+            reco.AddAlgorithm(algo1);
+            reco.AddAlgorithm(algo2);
+            reco.AddAlgorithm((Func<long, List<long>>)primeSearch.SearchUnoptimized); //Just a different way to add the algorithm.
+
+            List<long> primes2 = reco.Run<List<long>, PrimeSearcher, long>(maxSearch);
+            primeSearch.PrintResults();
+            Console.WriteLine(primes2);
+        }
+
+
+        public static void testCheckpoint()
+        {
             PrimeSearcher primes = new PrimeSearcher();
             Checkpoint<PrimeSearcher> checkpoint = new Checkpoint<PrimeSearcher>();
             try
             {
                 primes = checkpoint.Load();
             }
-            catch (Exception){}
+            catch (Exception) { }
             for (long i = 0; i < 100; i++)
             {
                 Stopwatch timer = Stopwatch.StartNew();
-                primes.RunIterations(10);
-                if(timer.ElapsedMilliseconds > 1000)
+                primes.Search(10);
+                if (timer.ElapsedMilliseconds > 1000)
                 {
                     checkpoint.Save(primes);
                     timer.Restart();
-                }               
+                }
             }
             checkpoint.Save(primes);
 
-
             primes.PrintResults();
-            DataKeeper j = new DataKeeper();
-            Checkpoint<DataKeeper> checkpoint2 = new Checkpoint<DataKeeper>();
-
-            checkpoint2.Save(j);
-                j.a = 123;
-            j = (DataKeeper)checkpoint2.Load();
-
-            Console.WriteLine(j.a);
+            TestCheckpoint jk = new TestCheckpoint();
+            Checkpoint<TestCheckpoint> checkpoint2 = new Checkpoint<TestCheckpoint>();
         }
+
     }
 
-    public class DataKeeper
+    public class TestCheckpoint
     {
         public int a = 0;
         private int b = 1;
         protected int c = 2;
-        public Dataer outerObj = new Dataer();
+        public TestNestedOBject outerObj = new TestNestedOBject();
+
+
     }
 
-    public class Dataer
+    public class TestNestedOBject
     {
         public List<String> list = new List<string>();
-        public int[] arr = {2,5,3};
+        public int[] arr = { 2, 5, 3 };
         public Random obj = new Random();
 
-        public Dataer()
+        public TestNestedOBject()
         {
             list.Add("entry1");
             list.Add("entry2");
