@@ -24,12 +24,12 @@ namespace RecoveryBlocks
             Func<long, List<long>> algo1 = primeSearch.Search;
             Func<long, List<long>> algo2 = PrimeSearcher.SearchStatic;
 
-            //List<long> primes = algo1(maxSearch);
+            List<long> primes = algo1(maxSearch);
             Func<bool> checkPrimes = primeSearch.CheckPrimes;
-            Console.WriteLine("Without recovery blocks: ");
+            Console.WriteLine("\n\n\nWithout recovery blocks: ");
             primeSearch.PrintResults();
 
-
+            primeSearch = new PrimeSearcher();
             RecoveryBlock reco = new RecoveryBlock(checkPrimes);
 
             //reco.AddAlgorithm(algoFail1);
@@ -40,7 +40,7 @@ namespace RecoveryBlocks
 
             List<long> primes2 = reco.Run<List<long>, PrimeSearcher, long>(maxSearch);
             primeSearch.PrintResults();
-            Console.WriteLine(primes2);
+            Console.WriteLine("Recovery block run result:\n"+ string.Join(",", primes2.ToArray())+ "\n\n\n");
         }
 
 
