@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using Print = System.Diagnostics.Debug;
 
 namespace RecoveryBlocks
 {
@@ -7,7 +9,6 @@ namespace RecoveryBlocks
     {
         public List<long> foundPrimes = new List<long>();
         public long primeCandidate = 3;
-        public Checkpoint<PrimeSearcher> checkpoint;
 
         public List<long> Search(long endNumber)
         {
